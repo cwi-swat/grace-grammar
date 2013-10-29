@@ -2,10 +2,17 @@ module Test
 
 import ParseTree;
 import Grace;
-
+import List;
 
 bool isExpr(CodeSequence cs) = (CodeSequence)`<Expression e>` := cs;
+
 CodeSequence parseCode(str s) = parse(#CodeSequence, s);
+Expression parseExp(str s) = parse(#Expression, s);
+
+// f(f(a, b), c)
+bool isLeftAssoc(Expression x)
+  = size(x.args[0].args) == 5
+  && size(x.args[4].args) == 1;
 
 int countStats((CodeSequence)`<Code _>`) = 1;
 int countStats((CodeSequence)`<CodeSequence a>; <CodeSequence b>`) 
@@ -57,4 +64,36 @@ test bool otherOp3()
 test bool otherOp3() 
   = countStats(parseCode("1 ++ 
                          ' 2")) == 1;
+
+
+test bool plusOp1() 
+  = isExpr(parseCode("1 + 2"));
+
+
+test bool plusOp2() 
+  = isExpr(parseCode("1 
+                     '  + 2"));
+
+// is there no builtin unary plus?
+//test bool plusOp3() 
+//  = countStats(parseCode("1 
+//                         '+ 2")) == 2;
+
+test bool plusOp3() 
+  = countStats(parseCode("1 + 
+                         ' 2")) == 1;
+  
+  
+test bool otherOpPrecedence1() 
+  = isLeftAssoc(parseExp("1 ++ 2 ++ 3")); 
+  
+test bool otherOpPrecedence2() {
+ try {
+   parseExp("1 -- 2 ++ 3");
+   return false;
+ }
+ catch ParseError(_): return true;
+}
+   
+  
   
