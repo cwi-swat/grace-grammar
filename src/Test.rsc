@@ -65,6 +65,21 @@ test bool otherOp3()
   = countStats(parseCode("1 ++ 
                          ' 2")) == 1;
 
+test bool otherOp4() 
+  = countStats(parseCode("1 ++ 
+                         ' 2 ++ 
+                         '   3")) == 1;
+
+test bool otherOp5() 
+  = countStats(parseCode("1 ++ 
+                         ' 2 
+                         '++ 3")) == 2;
+
+test bool otherOp6() 
+  = countStats(parseCode("1  
+                         ' ++ 2 
+                         ' ++ 3")) == 1;
+
 
 test bool plusOp1() 
   = isExpr(parseCode("1 + 2"));
@@ -95,5 +110,5 @@ test bool otherOpPrecedence2() {
  catch ParseError(_): return true;
 }
    
-  
+
   

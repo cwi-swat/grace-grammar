@@ -105,11 +105,16 @@ syntax GenericFormals
   = "\<" {Identifier ","}+ "\>"
   ;
 
+
+
 syntax Where
   = "where" Expression $
   | "where" Expression ";"
   ;
   
+// TODO: this should also be a binary op.
+// and do some kind of offside.
+
 syntax WhereClause 
   = Where*
   ;
