@@ -1,8 +1,8 @@
 module Code
 
-import Declarations;
-import Statements;
-import Comment;
+extend Declarations;
+extend Statements;
+extend Comment;
 import Offside;
 
 
@@ -45,6 +45,7 @@ syntax InnerCodeSequence
 
   
 InnerCodeSequence seqInner(InnerCodeSequence lhs,  InnerCodeSequence rhs) {
+  //println("SEQInner");
   if (horizontal(lhs, rhs)) {
     filter;
   }
@@ -52,7 +53,11 @@ InnerCodeSequence seqInner(InnerCodeSequence lhs,  InnerCodeSequence rhs) {
 }
 
 CodeSequence seq(CodeSequence lhs,  CodeSequence rhs) {
+  //println("SEQ");
+  //println("LHS = <lhs>");
+  //println("RHS = <rhs>");
   if (horizontal(lhs, rhs)) {
+    println("Filtering seq");
     filter;
   }
   fail;

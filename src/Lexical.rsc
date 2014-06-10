@@ -5,8 +5,6 @@ lexical Identifier
   | ([a-zA-Z0-9\'] !<< [a-zA-Z][a-zA-Z0-9\']* !>> [a-zA-Z0-9\']) \ Reserved
   ;
   
-keyword Reserved
- = ;
 
 keyword Reserved 
   = "self" 
@@ -21,6 +19,8 @@ keyword Reserved
   | "method" 
   | "prefix" 
   | "interface"
+  // not in the spec
+  | "return"
   ; // more to come
 
 

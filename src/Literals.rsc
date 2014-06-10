@@ -1,10 +1,10 @@
 module Literals
 
-import Lexical;
-import Declarations;
-import Code;
-import Expressions;
-import Statements;
+extend Lexical;
+extend Declarations;
+extend Code;
+extend Expressions;
+extend Statements;
 
 syntax Literal
   = StringLiteral

@@ -14,16 +14,16 @@ syntax VarDeclaration
   ;
 
 syntax DefDeclaration 
-  = "def" Identifier  (":" TypeExpression)? "=" Expression
+  = @Foldable "def" Identifier  (":" TypeExpression)? "=" Expression
   ;
 
 syntax MethodDeclaration 
-  = "method" MethodHeader MethodReturnType? WhereClause 
+  = @Foldable "method" MethodHeader MethodReturnType? WhereClause 
        "{" InnerCodeSequence? "}"
   ;
   
 syntax ClassDeclaration 
-  = "class" Identifier "." ClassHeader MethodReturnType? WhereClause
+  = @Foldable "class" Identifier "." ClassHeader MethodReturnType? WhereClause
      "{" InheritsClause? CodeSequence? "}";
 
 // TODO: how to do this in rascal??
@@ -81,13 +81,13 @@ syntax TypeDeclaration
 
 syntax TypeExpression 
    = non-assoc (
-         left TypeExpression "|" TypeExpression
-         | left  TypeExpression "&" TypeExpression
-         | left TypeExpression "+" TypeExpression
+       left TypeExpression "|" TypeExpression
+     | left TypeExpression "&" TypeExpression
+     | left TypeExpression "+" TypeExpression
    )
    |  NakedTypeLiteral
    |  Literal
-   | path: ("super" ".")? {IdGenericActuals "."}+ 
+   |  path: ("super" ".")? {IdGenericActuals "."}+ 
    |  bracket "(" TypeExpression ")"
    ;
 

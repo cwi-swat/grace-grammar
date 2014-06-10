@@ -16,5 +16,5 @@ bool vertical(Tree lhs, Tree rhs)
   = !sameLine(lhs, rhs) && offSide(lhs, rhs);
   
 bool horizontal(Tree lhs, Tree rhs)
-  = !vertical(lhs, rhs); 
-  //sameLine(lhs, rhs) || !offSide(lhs, rhs);
+  = //!vertical(lhs, rhs); 
+  sameLine(lhs, rhs) || !offSide(lhs, rhs);

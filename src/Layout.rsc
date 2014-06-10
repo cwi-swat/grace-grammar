@@ -1,6 +1,6 @@
 module Layout
 
-import Comment;
+extend Comment;
 
 layout Default
   = LAYOUT* !>> [\ \n\r] !>> "//";

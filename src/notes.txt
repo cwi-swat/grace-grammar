@@ -1,0 +1,23 @@
+
+
+- Remove distinction between innercode and code, specify as separate constraint. 
+- Specify the offside rule separately from where it is applicable
+    - keyword args
+    - infix (prefix?) operators
+    - code sequence
+
+    
+ Horizontal: on multiple + offside (or on one line), 
+ Vertical: on multiple line and not offside, (or single line + ";")
+ 
+ Things you want to be horizontal, filter when vertical.
+ (and vice versa).
+ 
+ Exp OtherOp Exp -> filter if vertical(exp1, op)
+ 
+ ArgumentClause ::= Identifier Expression
+ SelfSend ::= ArgumentClause+
+ -->
+  SelfSend ::= ArgumentClause
+            | SelfSend SelfSend {left} => filter if vertical(ssend1, ssend2)
+            
