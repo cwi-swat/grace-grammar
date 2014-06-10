@@ -61,13 +61,19 @@ Statement exp(Expression e) {
      if (t.prod.def is layouts) {
        return true;
      }
+     
+     if ("<t>" == "") {
+       return true;
+     }
+     
      return false;
    }
      
      
    Tree filterIt(Tree e2) {
      if (offSide(e, e2)) {
-       println("Filtering <e2>");
+       println("Filtering |<e2>|");
+       rprintln(e2);
        filter;
      }
      return e2;

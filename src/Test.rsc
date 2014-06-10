@@ -99,6 +99,12 @@ test bool keywordMessage7()
                      '} else {
                      '  z
                      '}"));
+
+test bool keywordMessage7NoCurlies() 
+  = isExpr(parseCode("if (x) then 
+                     '  3 
+                     ' else 
+                     '  4"));
  
 
 test bool otherOp1() 
