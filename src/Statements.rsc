@@ -1,6 +1,5 @@
 module Statements
 
-extend Expressions;
 import Offside;
 import ParseTree;
 
@@ -10,21 +9,6 @@ syntax Statement
   | assign: Expression ":=" Expression
   ;
 
-  
-/*
-ffSide(Tree lhs, Tree rhs) 
-  = rhs@\loc.begin.column <= lhs@\loc.begin.column;
-  
-bool sameLine(Tree lhs, Tree rhs)
-  = lhs@\loc.begin.line == rhs@\loc.begin.line;
-
-bool vertical(Tree lhs, Tree rhs)
-  = !sameLine(lhs, rhs) && offSide(lhs, rhs);
-  
-bool horizontal(Tree lhs, Tree rhs)
-  = !vertical(lhs, rhs); 
-  //sameLine(lhs, rhs) || !offSide(lhs, rhs);
-  */  
   
 Statement ret(Expression e) {
    bool leftMost(Tree e2) =
@@ -72,8 +56,8 @@ Statement exp(Expression e) {
      
    Tree filterIt(Tree e2) {
      if (offSide(e, e2)) {
-       println("Filtering |<e2>|");
-       rprintln(e2);
+       //println("Filtering |<e2>|");
+       //rprintln(e2);
        filter;
      }
      return e2;

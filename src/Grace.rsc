@@ -5,7 +5,6 @@ extend Declarations;
 extend Literals;
 extend Expressions;
 extend Statements;
-//extend Types;
 extend Code;
 extend Layout;
 extend Comment;

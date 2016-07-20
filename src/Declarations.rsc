@@ -1,39 +1,42 @@
 module Declarations
 
-import Expressions;
-import Statements;
-import Lexical;
-import Literals;
-import Code;
+//import Expressions;
+//import Statements;
+//import Lexical;
+//import Literals;
+//import Code;
 
 // Change: WhereClause? -> WhereClause
 // (because WhereClause = Where*)
 
 syntax VarDeclaration 
-  = "var" Identifier  (":" TypeExpression)? (":=" Expression)?
+  = "var" Identifier  Modifier? (":=" Expression)?
   ;
 
 syntax DefDeclaration 
-  = @Foldable "def" Identifier  (":" TypeExpression)? "=" Expression
+  = @Foldable "def" Identifier Modifier? "=" Expression
+  ;
+
+syntax Modifier
+  = "is" "public"
+  | "is" "readable"
+  | "is" "confidential"
   ;
 
 syntax MethodDeclaration 
-  = @Foldable "method" MethodHeader MethodReturnType? WhereClause 
-       "{" InnerCodeSequence? "}"
+  // make check that disallows methods in methods.
+  = @Foldable "method" MethodHeader "{" CodeSequence? "}"
   ;
   
 syntax ClassDeclaration 
-  = @Foldable "class" Identifier "." ClassHeader MethodReturnType? WhereClause
-     "{" InheritsClause? CodeSequence? "}";
+  = @Foldable "class" MethodHeader "{" InheritsClause? CodeSequence? "}";
 
 // TODO: how to do this in rascal??
 //warning: order here is significant!
 
 syntax MethodHeader 
-  = accessingAssignment: "[" "]" ":=" GenericFormals? MethodFormals 
-  | accessing: "[" "]" GenericFormals? MethodFormals 
-  | assignment: Identifier ":=" OneMethodFormal 
-  | Identifier GenericFormals? MethodFormals ArgumentHeader* 
+  = assignment: Identifier ":=" OneMethodFormal 
+  | call: Identifier MethodFormals ArgumentHeader* 
   | unary: Identifier GenericFormals? 
   | operator: OtherOp OneMethodFormal 
   | prefix: "prefix" !>> [ \n\r] OtherOp
@@ -45,8 +48,8 @@ syntax ArgumentHeader
   ;
 
 syntax ClassHeader 
-  = Identifier GenericFormals? MethodFormals ArgumentHeader*  
-  | Identifier GenericFormals? 
+  = Identifier MethodFormals ArgumentHeader*  
+  | Identifier 
   ;
   
 syntax InheritsClause 
@@ -58,12 +61,8 @@ syntax ArgumentHeader
   ;
 
 
-syntax MethodReturnType 
-  = "-\>" TypeExpression
-  ;
-
 syntax Formal 
-  = Identifier (":" TypeExpression)?
+  = Identifier 
   ;
   
 syntax MethodFormals 
@@ -72,51 +71,6 @@ syntax MethodFormals
 
 syntax OneMethodFormal 
   = "(" Formal ")"
-  ;
-  
-syntax TypeDeclaration 
-  = "type" Identifier GenericFormals? "=" TypeExpression WhereClause $
-  | "type" Identifier GenericFormals? "=" TypeExpression WhereClause ";"
-  ;
-
-syntax TypeExpression 
-   = non-assoc (
-       left TypeExpression "|" TypeExpression
-     | left TypeExpression "&" TypeExpression
-     | left TypeExpression "+" TypeExpression
-   )
-   |  NakedTypeLiteral
-   |  Literal
-   |  path: ("super" ".")? {IdGenericActuals "."}+ 
-   |  bracket "(" TypeExpression ")"
-   ;
-
-syntax IdGenericActuals 
-  = Identifier GenericActuals?
-  ;
-  
-  
-// "generics" 
-syntax GenericActuals 
-  = "\<" {TypeExpression ","}+ "\>"
-  ;
-
-syntax GenericFormals 
-  = "\<" {Identifier ","}+ "\>"
-  ;
-
-
-
-syntax Where
-  = "where" Expression $
-  | "where" Expression ";"
-  ;
-  
-// TODO: this should also be a binary op.
-// and do some kind of offside.
-
-syntax WhereClause 
-  = Where*
   ;
   
 

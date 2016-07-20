@@ -12,7 +12,7 @@ syntax Literal
   | BlockLiteral
   | NumberLiteral
   | ObjectLiteral
-  | TupleLiteral
+  | LineUp
   | TypeLiteral
   ;
 
@@ -33,8 +33,14 @@ lexical EscapeChar
 
 // NB: otherChars, needs to escape  \
 
+lexical Arrow
+  = "→"
+  | "-\>"
+  ;
+
 syntax BlockLiteral
-  = "{" (BlockSignature "-\>")? InnerCodeSequence? "}"
+  = noArgs: "{" InnerCodeSequence? "}"
+  | withArgs: "{" BlockSignature Arrow InnerCodeSequence? "}"
   ;
   
 syntax BlockSignature
@@ -56,7 +62,7 @@ syntax MatchBinding
   ;   
   
 syntax MatchExtra
-  = ":" TypeExpression MatchingBlockTail?
+  = ":" Expression /* was TypeExpression */ MatchingBlockTail?
   ;
    
 syntax MatchingBlockTail 
@@ -76,23 +82,8 @@ syntax ObjectLiteral
   = "object" "{" InheritsClause? CodeSequence? "}"
   ;
   
-syntax TupleLiteral 
+syntax LineUp 
   = "[" {Expression ","}+ "]"
   ;
 
-syntax TypeLiteral 
-  = "type" NakedTypeLiteral
-  ;
-  
-  
-syntax MethodType
-  = MethodHeader MethodReturnType ";"
-  | MethodHeader MethodReturnType $
-  | MethodHeader MethodReturnType WhereClause? 
-  ;
-
-// TODO: check this!
-syntax NakedTypeLiteral 
-  =  "{" MethodType* "}"
-  ;
   

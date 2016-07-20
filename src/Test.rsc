@@ -1,7 +1,7 @@
 module Test
 
 import ParseTree;
-import Grace;
+import DynGrace;
 import List;
 import IO;
 
@@ -32,12 +32,11 @@ bool isLeftAssoc(Expression x)
   = size(x.args[0].args) == 5
   && size(x.args[4].args) == 1;
 
+//int countStats((CodeSequence)`<Code+ cs>`) = ( 0 | it + 1 | _ <- cs );
 int countStats((CodeSequence)`<Code _>`) = 1;
-int countStats((CodeSequence)`<CodeSequence a>; <CodeSequence b>`) 
-  = countStats(a) + countStats(b);
+int countStats((CodeSequence)`<CodeSequence c1> <CodeSequence c2>`) 
+  = countStats(c1) + countStats(c2);
 
-int countStats((CodeSequence)`<CodeSequence a> <CodeSequence b>`) 
-  = countStats(a) + countStats(b);
 
 test bool keywordMessage0() 
   = isExpr(parseCode("if (x) then {y} 

@@ -1,26 +1,23 @@
 module Expressions
 
-extend Lexical;
-extend Literals;
-extend Layout;
+//extend Lexical;
+//extend Literals;
+//extend Layout;
 import IO;
 import Offside;
 
 
 syntax UnaryRequest
-  = Identifier GenericActuals? () !>> [{(\"]
+  = Identifier () !>> [{(\"]
   ;
   
 syntax Expression 
-  = Literal
+  = lit: Literal
   | unarySelf: UnaryRequest
   | implicitSelf: ArgumentClause+
-  | nonNakedSuper: [s][u][p][e][r] () >> [!?@#$%^&|~=+-*/\>\<:.]
-  | Expression "." Identifier GenericActuals? Argument ArgumentClause*
+  | Expression "." Identifier Argument ArgumentClause*
   | Expression "." UnaryRequest
-  | Expression "[" {Expression ","}+ "]"
-  > OtherOp+ "super"  
-  | OtherOp Expression
+  > OtherOp Expression
   > left (
     Expression "*" Expression
   | Expression "/" Expression
@@ -52,7 +49,7 @@ lexical Operator
  
 keyword ReservedOperator
   = "*" | "/" | "+" | "-"  
-  | "=" | "." | ":" | ";" | ":=" | "-\>"
+  | "=" | "." | ":" | ";" | ":=" | "-\>" | "→"
   ;
 
 syntax OtherOp 

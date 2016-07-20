@@ -1,12 +1,12 @@
 module Plugin
 
 import util::IDE;
-import Grace;
+import DynGrace;
 import ParseTree;
 
 public void main() {
   registerLanguage("Grace", "grace", 
     start[Program] (str input, loc origin) {
-      return parse(#start[Program], input, origin);
+      return parse(#start[Program], input, origin, allowAmbiguity=true);
     });
 }
