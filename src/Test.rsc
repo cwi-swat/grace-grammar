@@ -34,6 +34,7 @@ bool isLeftAssoc(Expression x)
 
 //int countStats((CodeSequence)`<Code+ cs>`) = ( 0 | it + 1 | _ <- cs );
 int countStats((CodeSequence)`<Code _>`) = 1;
+int countStats((CodeSequence)``) = 0;
 int countStats((CodeSequence)`<CodeSequence c1> <CodeSequence c2>`) 
   = countStats(c1) + countStats(c2);
 
@@ -105,6 +106,21 @@ test bool keywordMessage7NoCurlies()
                      ' else 
                      '  4"));
  
+test bool semicolonSingleLine()
+  = countStats(parseCode("a; b")) == 2;
+
+test bool semicolonMultiLine()
+  = countStats(parseCode("a;\n b")) == 2;
+
+test bool semicolonMultiLineStat()
+  = countStats(parseCode("if (x) then 
+                     '  3 
+                     ' else 
+                     '  4; x")) == 2;
+
+test bool curlyOpenOnNextLine()
+  = countStats(parseCode("foo\n  {x}")) == 1;
+
 
 test bool otherOp1() 
   = isExpr(parseCode("1 ++ 2"));

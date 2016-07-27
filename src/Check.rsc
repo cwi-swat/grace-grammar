@@ -17,12 +17,11 @@ set[loc] containedMethods(CodeSequence c) {
   set[loc] result = {};
   top-down-break visit (c) {
     case (Declaration)`method <MethodHeader m> { <CodeSequence c> }`: result += {m@\loc};
-    case (Declaration)`method <MethodHeader m> { }`: result += {m@\loc};
     case (Declaration)`class <MethodHeader _> { <CodeSequence _> }`: ;
-    case (Declaration)`class <MethodHeader _> { <InheritsClause _> <CodeSequence _> }`: ;
+    case (Declaration)`class <MethodHeader _> { <Extend* _> <CodeSequence _> }`: ;
     case (Declaration)`trait <MethodHeader _> { <CodeSequence _> }`: ;
     case (Expression)`object { <CodeSequence _> }`: ;
-    case (Expression)`object { <InheritsClause _> <CodeSequence _> }`: ;
+    case (Expression)`object { <Extend* _> <CodeSequence _> }`: ;
   }
   return result;
 }
@@ -44,10 +43,10 @@ set[loc] containedFields(CodeSequence c) {
     case (Declaration)`def <Identifier x> = <Expression _>`: result += {x@\loc};
     case (Declaration)`def <Identifier x> <Annos _> = <Expression _>`: result += {x@\loc};
     case (Declaration)`class <MethodHeader _> { <CodeSequence _> }`: ;
-    case (Declaration)`class <MethodHeader _> { <InheritsClause _> <CodeSequence _> }`: ;
+    case (Declaration)`class <MethodHeader _> { <Extend* _> <CodeSequence _> }`: ;
     case (Declaration)`trait <MethodHeader _> { <CodeSequence _> }`: ;
     case (Expression)`object { <CodeSequence _> }`: ;
-    case (Expression)`object { <InheritsClause _> <CodeSequence _> }`: ;
+    case (Expression)`object { <Extend* _> <CodeSequence _> }`: ;
   }
   return result; 
 }

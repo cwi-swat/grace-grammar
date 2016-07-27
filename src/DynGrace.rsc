@@ -9,10 +9,9 @@ start syntax Program
   ;
 
 
-// Statements
-
 syntax Statement
   = ret: "return" Expression 
+  | ret0: "return"
   | exp: Expression 
   | assign: Expression ":=" Expression 
   ;
@@ -20,83 +19,45 @@ syntax Statement
 syntax Declaration
   = var: "var" Identifier Annos? (":=" Expression)? 
   | @Foldable def: "def" Identifier Annos? "=" Expression 
-  | @Foldable class:  "class" MethodHeader Annos? "{" InheritsClause? CodeSequence? "}"
-  | @Foldable trait:  "trait" MethodHeader Annos? "{" CodeSequence? "}"
-   // make check that disallows methods in methods.
-  | @Foldable method:  "method" MethodHeader Annos? "{" CodeSequence? "}"
+  | @Foldable class:  "class" MethodHeader!prefix!operator!assignment Annos? "{" Extend* CodeSequence "}"
+  | @Foldable trait:  "trait" MethodHeader!prefix!operator!assignment Annos? "{" CodeSequence "}"
+  | @Foldable method:  "method" MethodHeader Annos? "{" CodeSequence "}"
   ;
 
 syntax Code
-  = decl: Declaration  ";"?
+  = decl: Declaration ";"?
   | stat: Statement ";"?
   ;
   
-syntax CodeSequence 
-  = Code 
-  | right seq: CodeSequence CodeSequence 
+syntax CodeSequence // TODO: this should be a proper list (e.g. Code*, but filtering does not seem to work)
+  = code: Code 
+  | empty: 
+  | right seq: CodeSequence!empty CodeSequence!empty 
   ;
   
-// Declarations
-
-syntax Annos
-  = "is" {Anno ","}+ 
-  ;
+syntax Annos = "is" {Anno ","}+;
 
 syntax Anno
-  = "public"
-  | "writable"
-  | "readable"
-  | "overrides"
-  | "manifest"
-  | "confidential"
-  ;
-
+  = "public" | "writable" | "readable" | "overrides" | "manifest" | "confidential" | "required";
 
 syntax MethodHeader 
-  = assignment: Identifier ":=" OneMethodFormal 
-  | call: Identifier MethodFormals ArgumentHeader* 
-  | unary: Identifier GenericFormals? 
-  | operator: OtherOp OneMethodFormal 
+  = assignment: Identifier ":=" "(" Identifier ")" 
+  | keywords: ArgumentHeader+ 
+  | unary: Identifier 
+  | operator: OtherOp "(" Identifier ")" 
   | prefix: "prefix" !>> [ \n\r] OtherOp
   ;
 
+syntax ArgumentHeader = Identifier keyword "(" {Identifier ","}+ formals ")";
 
-syntax ArgumentHeader
-  = Identifier MethodFormals
-  ;
-
-syntax ClassHeader 
-  = Identifier MethodFormals ArgumentHeader*  
-  | Identifier 
-  ;
-  
-syntax InheritsClause 
-  = "inherit" Expression 
+syntax Extend 
+  = "inherit" Expression
+  | "use" Expression 
   ;  
 
-syntax ArgumentHeader 
-  = Identifier MethodFormals
-  ;
-
-
-syntax Formal 
-  = Identifier 
-  ;
-  
-syntax MethodFormals 
-  = "(" {Formal ","}+ ")"
-  ;
-
-syntax OneMethodFormal 
-  = "(" Formal ")"
-  ;
 
 // Expressions
 
-syntax UnaryRequest
-  = Identifier () !>> [{(\"\[]
-  ;
-  
 syntax Dot = ".";
 syntax Star = "*";
 syntax Slash = "/";
@@ -109,30 +70,30 @@ syntax Ellipsis = "...";
 syntax Expression 
   = lit: Literal
   | ellipsis: Ellipsis
-  | unarySelf: UnaryRequest
+  | unarySelf: Identifier () !>> [{(\"\[]
   | bracket parens: OpenParen {Expression ";"}+ OpenParen
   | implicitSelf: ArgumentClause+
-  | Expression Dot Identifier Argument ArgumentClause*
-  | Expression Dot UnaryRequest
-  > OtherOp Expression
+  | sendKeyword: Expression Dot ArgumentClause+
+  | sendUnary: Expression Dot Identifier () !>> [{(\"\[]
+  > prefix: OtherOp Expression
   > left (
-    Expression Star Expression
-  | Expression Slash Expression
+    star: Expression Star Expression
+  | slash: Expression Slash Expression
   )
   > left (
-    Expression Plus Expression
-  | Expression Dash !>> "\>" Expression
+    plus: Expression Plus Expression
+  | dash: Expression Dash !>> "\>" !>> [0-9] Expression
   )
   > left binaryOther: Expression OtherOp op Expression 
   ;
   
 
 syntax Argument
- = OpenParen {Expression ","}+ CloseParen
- | BlockLiteral
- | StringLiteral
- | NumberLiteral
- | LineUp
+ = exps: OpenParen {Expression ","}+ CloseParen
+ | block: BlockLiteral
+ | string: StringLiteral
+ | number: NumberLiteral
+ | lineUp: LineUpLiteral
  ;
  
 syntax ArgumentClause
@@ -140,13 +101,11 @@ syntax ArgumentClause
   ;
 
 lexical Operator 
- = [!?@#$%^&|~=+\-*/\>\<:.]+ !>> [!?@#$%^&|~=+\-*/\>\<:.]
+ = [!?@#$%^&|~=+\-*/\>\<:.\u2200–\u22FF]+ !>> [!?@#$%^&|~=+\-*/\>\<:.]
  ;
  
 keyword ReservedOperator
-  = "*" | "/" | "+" | "-"  
-  | "=" | "." | ":" | ";" | ":=" | "-\>" | "→"
-  ;
+  = "." | "..." | ":=" | "-" | "+" | "*" | "/" | "\<" | "\>" | "-\>" | "→" | "[" | "]";
 
 syntax OtherOp 
   = Operator \ ReservedOperator
@@ -160,7 +119,7 @@ syntax Literal
   | BlockLiteral
   | NumberLiteral
   | ObjectLiteral
-  | LineUp
+  | LineUpLiteral
   ;
 
 
@@ -187,52 +146,28 @@ lexical Arrow
 
 syntax BlockLiteral
   // TODO: check, no methods allowed in code sequence
-  = noArgs: "{" CodeSequence? "}"
-  | withArgs: "{" BlockSignature Arrow CodeSequence? "}"
+  = noArgs: "{" CodeSequence body "}"
+  | withArgs: "{" {Identifier ","}+ formals Arrow CodeSequence body "}"
   ;
   
-syntax BlockSignature
-  = MatchBinding
-  | BlockFormals
-  ;
+syntax SelfLiteral = "self";
+   
+lexical Int = [+\-]? [0-9]+ !>> [0-9];
 
-syntax BlockFormals 
-  //= {Formal ","}* // Formal is amb with MatchBinding
-  // so we let a single formal with type expression
-  // always be a MatchBinding
-  = Formal "," {Formal ","}+
-  ;
+lexical Float = Int "." [0-9]+ !>> [0-9] ([eE] Int)?;
+
+lexical Radix = ([0]|[2-9]|([1-2][0-9])|([3][1-5])) "x" [0-9A-Za-z]+ !>> [0-9A-Za-z];
    
-syntax MatchBinding
-  = Identifier MatchExtra?
-  | Literal MatchExtra?
-  | "(" Expression ")" MatchExtra?
-  ;   
-  
-syntax MatchExtra
-  = ":" Expression /* was TypeExpression */ MatchingBlockTail?
-  ;
-   
-syntax MatchingBlockTail 
-  = "(" {MatchBinding ","}+ ")"
+syntax NumberLiteral 
+  = integer: Int  
+  | float: Float
+  | radix: Radix
   ;
   
   
-syntax SelfLiteral 
-  = "self"
-  ;
-   
-lexical NumberLiteral 
-  = [0-9]+ !>> [0-9] 
-  ;
+syntax ObjectLiteral = "object" Annos? "{" Extend* CodeSequence "}";
   
-syntax ObjectLiteral 
-  = "object" Annos? "{" InheritsClause? CodeSequence? "}"
-  ;
-  
-syntax LineUp 
-  = "[" {Expression ","}+ "]"
-  ;
+syntax LineUpLiteral = "[" {Expression ","}+ "]";
   
   
 // Lexical stuff
@@ -242,7 +177,6 @@ lexical Identifier
   | ([a-zA-Z0-9\'] !<< [a-zA-Z][a-zA-Z0-9\']* !>> [a-zA-Z0-9\']) \ Reserved
   ;
   
-
 
 keyword Reserved 
   = "self" 
@@ -269,19 +203,19 @@ keyword Reserved
   | "use"
   ;
 
-layout Default
-  = LAYOUT* !>> [\ \n\r] !>> "//";
+layout Default = LAYOUT* !>> [\ \n\r] !>> "//";
 
 lexical LAYOUT
   = Comment 
   | [\ \n\r] 
   ;
 
-lexical Comment
-  = @category="Comment" "//" ![\n\r]* $
-  ;
+lexical Comment = @category="Comment" "//" ![\n\r]* $ ;
   
-  
+/*
+ * Post-parse disambiguation
+ */
+
 Expression binaryOther(Expression lhs, OtherOp op, Expression rhs) {
   if (lhs is binaryOther, op != lhs.op) {
     filter;
@@ -316,7 +250,7 @@ Code stat(Statement s0, ";"? _) {
 	  if (CloseParen a := s, a@\loc.begin.column <= at, a@\loc.begin.line > atLine) {
 	    filter;
 	  }
-	  if (UnaryRequest a := s, a@\loc.begin.column <= at, a@\loc.begin.line > atLine) {
+	  if (Identifier a := s, a@\loc.begin.column <= at, a@\loc.begin.line > atLine) {
 	    filter;
 	  }
 	  if (Ellipsis a := s, a@\loc.begin.column <= at, a@\loc.begin.line > atLine) {
@@ -360,7 +294,7 @@ Code decl(Declaration d, ";"? _) {
   if (/CloseParen a := d, a@\loc.begin.column <= at, a@\loc.begin.line > atLine) {
     filter;
   }
-  if (/UnaryRequest a := d, a@\loc.begin.column <= at, a@\loc.begin.line > atLine) {
+  if (/Identifier a := d, a@\loc.begin.column <= at, a@\loc.begin.line > atLine) {
     filter;
   }
   if (/Ellipsis a := d, a@\loc.begin.column <= at, a@\loc.begin.line > atLine) {
