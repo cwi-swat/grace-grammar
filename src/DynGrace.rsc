@@ -4,10 +4,7 @@ import IO;
 import Offside;
 import ParseTree;
 
-start syntax Program 
-  = CodeSequence
-  ;
-
+start syntax Program = CodeSequence;
 
 syntax Statement
   = ret: "return" Expression 
@@ -18,10 +15,10 @@ syntax Statement
   
 syntax Declaration
   = var: "var" Identifier Annos? (":=" Expression)? 
-  | @Foldable def: "def" Identifier Annos? "=" Expression 
-  | @Foldable class:  "class" MethodHeader!prefix!operator!assignment Annos? "{" Extend* CodeSequence "}"
-  | @Foldable trait:  "trait" MethodHeader!prefix!operator!assignment Annos? "{" CodeSequence "}"
-  | @Foldable method:  "method" MethodHeader Annos? "{" CodeSequence "}"
+  | def: "def" Identifier Annos? "=" Expression 
+  | class: "class" MethodHeader!prefix!operator!assignment Annos? "{" Extend* CodeSequence "}"
+  | trait: "trait" MethodHeader!prefix!operator!assignment Annos? "{" CodeSequence "}"
+  | method:  "method" MethodHeader Annos? "{" CodeSequence "}"
   ;
 
 syntax Code
@@ -38,7 +35,9 @@ syntax CodeSequence // TODO: this should be a proper list (e.g. Code*, but filte
 syntax Annos = "is" {Anno ","}+;
 
 syntax Anno
-  = "public" | "writable" | "readable" | "overrides" | "manifest" | "confidential" | "required";
+  = "public" | "writable" | "readable" | "overrides" | "manifest" 
+  | "confidential" | "required"
+  ;
 
 syntax MethodHeader 
   = assignment: Identifier ":=" "(" Identifier ")" 
@@ -51,8 +50,8 @@ syntax MethodHeader
 syntax ArgumentHeader = Identifier keyword "(" {Identifier ","}+ formals ")";
 
 syntax Extend 
-  = "inherit" Expression
-  | "use" Expression 
+  = inherit: "inherit" Expression
+  | use: "use" Expression 
   ;  
 
 
@@ -70,11 +69,11 @@ syntax Ellipsis = "...";
 syntax Expression 
   = lit: Literal
   | ellipsis: Ellipsis
-  | unarySelf: Identifier () !>> [{(\"\[]
-  | bracket parens: OpenParen {Expression ";"}+ OpenParen
-  | implicitSelf: ArgumentClause+
-  | sendKeyword: Expression Dot ArgumentClause+
-  | sendUnary: Expression Dot Identifier () !>> [{(\"\[]
+  | implicitUnary: Identifier () !>> [{(\"\[]
+  | bracket parens: OpenParen {Expression ";"}+ CloseParen
+  | implicitMulti: ArgumentClause+
+  | multi: Expression Dot ArgumentClause+
+  | unary: Expression Dot Identifier () !>> [{(\"\[]
   > prefix: OtherOp Expression
   > left (
     star: Expression Star Expression
@@ -101,7 +100,7 @@ syntax ArgumentClause
   ;
 
 lexical Operator 
- = [!?@#$%^&|~=+\-*/\>\<:.\u2200–\u22FF]+ !>> [!?@#$%^&|~=+\-*/\>\<:.]
+ = [!?@#$%^&|~=+\-*/\>\<:.\u2200–\u22FF]+ !>> [!?@#$%^&|~=+\-*/\>\<:.\u2200–\u22FF]
  ;
  
 keyword ReservedOperator
@@ -122,27 +121,18 @@ syntax Literal
   | LineUpLiteral
   ;
 
-
-lexical StringLiteral 
-  = [\"] StringChar* [\"]
-  ;
-   
+lexical StringLiteral = [\"] StringChar* [\"];
    
 lexical StringChar 
   = EscapeChar
   | ![\\\"\t\f\b] // does \" belong here?
   ;  
 
-lexical EscapeChar 
-  = [\\] [\\\"\'{}bnrtlfe ]
-  ;
+lexical EscapeChar = [\\] [\\\"\'{}bnrtlfe ];
 
 // NB: otherChars, needs to escape  \
 
-lexical Arrow
-  = "→"
-  | "-\>"
-  ;
+lexical Arrow = "→" | "-\>";
 
 syntax BlockLiteral
   // TODO: check, no methods allowed in code sequence
@@ -179,28 +169,9 @@ lexical Identifier
   
 
 keyword Reserved 
-  = "self" 
-  | "inherit" 
-  | "class"
-  | "object" 
-  | "type" 
-  | "where" 
-  | "def" 
-  | "var" 
-  | "method" 
-  | "prefix" 
-  | "alias"
-  | "as"
-  | "dialect"
-  | "exclude"
-  | "import"
-  | "is"
-  | "outer"
-  | "required"
-  | "return"
-  | "Self"
-  | "trait"
-  | "use"
+  = "self" | "inherit" | "class" | "object" | "type" | "where" | "def" | "var" 
+  | "method" | "prefix" | "alias" | "as" | "dialect" | "exclude" | "import"
+  | "is" | "outer" | "required" | "return" | "Self" | "trait" | "use"
   ;
 
 layout Default = LAYOUT* !>> [\ \n\r] !>> "//";
@@ -216,6 +187,7 @@ lexical Comment = @category="Comment" "//" ![\n\r]* $ ;
  * Post-parse disambiguation
  */
 
+// Reject direct binary operator nesting with different operators
 Expression binaryOther(Expression lhs, OtherOp op, Expression rhs) {
   if (lhs is binaryOther, op != lhs.op) {
     filter;
@@ -224,6 +196,8 @@ Expression binaryOther(Expression lhs, OtherOp op, Expression rhs) {
 }
 
 
+// Statements must not contain syntactic elements with less or equal indentation
+// except whitespace, or closing }
 Code stat(Statement s0, ";"? _) {
   int at = s0@\loc.begin.column;
   int atLine = s0@\loc.begin.line;
@@ -270,6 +244,7 @@ Code stat(Statement s0, ";"? _) {
   fail;
 }
 
+// Idem for declarations.
 Code decl(Declaration d, ";"? _) {
   int at = d@\loc.begin.column;
   int atLine = d@\loc.begin.line;
@@ -320,8 +295,8 @@ default bool endsWithSemi(Code _) = false;
 bool endsWithSemi((CodeSequence)`<Code c>`) = endsWithSemi(c);
 bool endsWithSemi((CodeSequence)`<CodeSequence c1> <CodeSequence c2>`) = endsWithSemi(c2);
 
-// There's something wrong with filtering of lists, so we use binary
-// sequencing
+// Code elements can only be sequenced if they are on separate lines
+// or the left sequence is terminated by a semicolon.
 CodeSequence seq(CodeSequence lhs, CodeSequence rhs) {
   if (horizontal(lhs, rhs) && !endsWithSemi(lhs)) {
     filter;
