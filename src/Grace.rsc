@@ -18,7 +18,7 @@ import ParseTree;
  */ 
 
 start syntax Program 
-  = CodeSequence
+  = Code*
   ;
 
 

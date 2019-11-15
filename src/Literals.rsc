@@ -39,8 +39,8 @@ lexical Arrow
   ;
 
 syntax BlockLiteral
-  = noArgs: "{" InnerCodeSequence? "}"
-  | withArgs: "{" BlockSignature Arrow InnerCodeSequence? "}"
+  = noArgs: "{" Code* "}"
+  | withArgs: "{" BlockSignature Arrow Code* "}"
   ;
   
 syntax BlockSignature
@@ -79,7 +79,7 @@ lexical NumberLiteral
   ;
   
 syntax ObjectLiteral 
-  = "object" "{" InheritsClause? CodeSequence? "}"
+  = "object" "{" InheritsClause? Code* "}"
   ;
   
 syntax LineUp 
