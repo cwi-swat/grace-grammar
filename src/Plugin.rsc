@@ -12,15 +12,25 @@ import IO;
 
 
 str preprocess(str src) {
-  return intercalate("\n", insertSemicolons(split("\n", src)));
+  return intercalate("\n", insertMarkers(split("\n", src)));
 }
 
 bool isMarker(Tree t) = appl(prod(sort("MARKER"), _, _), _) := t;
   
   
 
-Tree deleteMarkers(appl(Production p, list[Tree] args)) 
-  = appl(p, [ deleteMarkers(a) | Tree a <- args, !isMarker(a) ]);
+Tree deleteMarkers(t:appl(Production p, list[Tree] args)) {
+  list[Tree] newArgs = [];
+  for (int i <- [0..size(args)]) {
+     if (isMarker(args[i])) {
+       ;//newArgs = newArgs[0..-1]; // remove preceding layout node;
+     }
+     else {
+       newArgs += [deleteMarkers(args[i])];
+     }
+   } 
+   return appl(p, newArgs);
+}
   
 default Tree deleteMarkers(Tree t) = t;
   
